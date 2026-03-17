@@ -2,19 +2,23 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 
-// Stubs
-const Dashboard = () => <div className="text-xl font-bold">Dashboard View Stub</div>;
-const EntityOnboarding = () => <div className="text-xl font-bold">Entity Onboarding View Stub</div>;
-const DataIngestion = () => <div className="text-xl font-bold">Data Ingestion View Stub</div>;
-const DataValidation = () => <div className="text-xl font-bold">Data Validation View Stub</div>;
-const Analytics = () => <div className="text-xl font-bold">Analytics & Risk View Stub</div>;
-const NewsSignals = () => <div className="text-xl font-bold">News Signals View Stub</div>;
-const CreditReport = () => <div className="text-xl font-bold">Credit Report View Stub</div>;
+import Dashboard from './pages/Dashboard';
+import EntityOnboarding from './pages/EntityOnboarding';
+import DataIngestion from './pages/DataIngestion';
+import DataValidation from './pages/DataValidation';
+import Analytics from './pages/Analytics';
+import NewsSignals from './pages/NewsSignals';
+import CreditReport from './pages/CreditReport';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
         <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/onboarding" element={<EntityOnboarding />} />

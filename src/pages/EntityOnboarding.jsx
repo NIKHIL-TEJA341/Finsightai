@@ -169,17 +169,39 @@ const Step2 = ({ prevStep, nextStep, formData, updateFormData }) => (
 );
 
 export default function EntityOnboarding() {
-    const [step, setStep] = useState(1);
-    const [formData, setFormData] = useState({
-        companyName: '',
-        taxId: '',
-        industry: '',
-        incorporationDate: '2020-01-01', // Defaulted
-        loanAmount: 0,
-        loanPurpose: '',
-        termLength: 0
+    const [step, setStep] = useState(() => {
+        const saved = sessionStorage.getItem('onboardingStep');
+        return saved ? parseInt(saved, 10) : 1;
     });
-    const [statusText, setStatusText] = useState("IN PROGRESS");
+
+    const [formData, setFormData] = useState(() => {
+        const saved = sessionStorage.getItem('onboardingFormData');
+        return saved ? JSON.parse(saved) : {
+            companyName: '',
+            taxId: '',
+            industry: '',
+            incorporationDate: '2020-01-01',
+            loanAmount: 0,
+            loanPurpose: '',
+            termLength: 0
+        };
+    });
+
+    const [statusText, setStatusText] = useState(() => {
+        return sessionStorage.getItem('onboardingStatus') || "IN PROGRESS";
+    });
+
+    React.useEffect(() => {
+        sessionStorage.setItem('onboardingStep', step);
+    }, [step]);
+
+    React.useEffect(() => {
+        sessionStorage.setItem('onboardingFormData', JSON.stringify(formData));
+    }, [formData]);
+
+    React.useEffect(() => {
+        sessionStorage.setItem('onboardingStatus', statusText);
+    }, [statusText]);
 
     const updateFormData = (updates) => {
         setFormData(prev => ({ ...prev, ...updates }));

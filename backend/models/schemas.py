@@ -27,9 +27,19 @@ class ExtractedField(BaseModel):
     confidence: float
     warning: Optional[str] = None
 
+class ValidationField(BaseModel):
+    key: str
+    value: str
+    confidence: float
+    isWarning: bool = False
+    warningText: Optional[str] = None
+
 class DataValidationResponse(BaseModel):
     documentId: str
-    fields: List[ExtractedField]
+    filename: Optional[str] = None
+    overallConfidence: float
+    warnings: int
+    fields: List[ValidationField]
 
 class RiskProfile(BaseModel):
     factor: str

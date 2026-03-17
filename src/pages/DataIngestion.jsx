@@ -1,5 +1,6 @@
 import React from 'react';
-import { UploadCloud, FileText, FileSpreadsheet, CheckCircle2, Circle, Sparkles } from 'lucide-react';
+import { UploadCloud, FileText, FileSpreadsheet, CheckCircle2, Circle, Sparkles, ArrowRight } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
 
 
@@ -87,7 +88,8 @@ export default function DataIngestion() {
             size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
             status: "Uploading",
             progress: 10,
-            type: file.name.endsWith('.pdf') ? 'pdf' : 'excel'
+            // be case‑insensitive when categorising the file type
+            type: file.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'excel'
         };
 
         setUploads(prev => [newUpload, ...prev]);
@@ -159,8 +161,8 @@ export default function DataIngestion() {
                                             <span className="text-sm font-bold text-slate-900 truncate">{upload.filename}</span>
                                             <div className="flex items-center gap-4">
                                                 <span className="text-xs font-medium text-slate-500">{upload.size}</span>
-                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full inline-flex items-center ${upload.status === 'PROCESSING' || upload.status === 'Processing' ? 'text-amber-700 bg-amber-50' : upload.status === 'Uploading' ? 'text-primary-700 bg-primary-50' : upload.status === 'Failed' || upload.status === 'Error' ? 'text-red-700 bg-red-50' : 'text-slate-700 bg-slate-50'}`}>
-                                                    {upload.status}
+                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full inline-flex items-center ${upload.status === 'PROCESSING' || upload.status === 'Processing' || upload.status === 'Complete' ? 'text-emerald-700 bg-emerald-50' : upload.status === 'Uploading' ? 'text-primary-700 bg-primary-50' : upload.status === 'Failed' || upload.status === 'Error' ? 'text-red-700 bg-red-50' : 'text-slate-700 bg-slate-50'}`}>
+                                                    {upload.status === 'PROCESSING' || upload.status === 'Processing' ? 'Complete' : upload.status}
                                                 </span>
                                             </div>
                                         </div>
@@ -173,6 +175,15 @@ export default function DataIngestion() {
                                 </div>
                             ))}
                         </div>
+
+                        {/* Action Bar that appears if there are completed uploads */}
+                        {uploads.some(u => u.status === 'PROCESSING' || u.status === 'Processing' || u.status === 'Complete') && (
+                            <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end">
+                                <NavLink to="/validation" className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm rounded-lg shadow-sm flex items-center gap-2 transition-colors">
+                                    Proceed to Validation <ArrowRight className="w-4 h-4" />
+                                </NavLink>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="w-full lg:w-[360px]">

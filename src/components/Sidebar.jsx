@@ -44,9 +44,9 @@ export default function Sidebar() {
             </nav>
 
             <div className="p-4 border-t border-slate-200">
-                <button className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors">
+                <NavLink to="/onboarding" className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors">
                     <span>+</span> New Evaluation
-                </button>
+                </NavLink>
             </div>
         </aside>
     );

@@ -36,7 +36,7 @@ const MetricCard = ({ title, value, subtext, trend, isPositive, icon: Icon, colo
         <div>
             <h3 className="text-sm font-bold text-slate-500 mb-1">{title}</h3>
             <div className="text-2xl font-extrabold text-slate-900 mb-1">{value}</div>
-            <p className="text-xs font-medium text-slate-400">{subtext}</p>
+            <div className="text-xs font-medium text-slate-400">{subtext}</div>
         </div>
     </div>
 );
@@ -51,17 +51,19 @@ export default function Analytics() {
     });
     const [loading, setLoading] = React.useState(true);
 
+    const [extraction, setExtraction] = React.useState(null);
+
     React.useEffect(() => {
-        fetch('http://localhost:8000/api/analytics/ENT-1234')
-            .then(res => res.json())
-            .then(data => {
-                setAnalytics(data);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Failed to fetch analytics:", err);
-                setLoading(false);
-            });
+        const docId = localStorage.getItem('latestDocumentId');
+        
+        Promise.all([
+            fetch('http://localhost:8000/api/analytics/ENT-1234').then(res => res.json()).catch(err => { console.error(err); return null; }),
+            docId ? fetch(`http://localhost:8000/api/documents/${docId}/extraction`).then(res => res.json()).catch(err => { console.error(err); return null; }) : Promise.resolve(null)
+        ]).then(([analyticsData, extractionData]) => {
+            if (analyticsData) setAnalytics(analyticsData);
+            if (extractionData) setExtraction(extractionData);
+            setLoading(false);
+        });
     }, []);
 
     if (loading) {
@@ -73,6 +75,17 @@ export default function Analytics() {
     }
 
     const { overallRiskScore, revenueData, riskData, debtData, detailedProfile } = analytics;
+    
+    // Attempt to parse document data if available
+    const getExtractedField = (keyword, fallback) => {
+        if (!extraction || !extraction.fields) return fallback;
+        const field = extraction.fields.find(f => f.key.toLowerCase().includes(keyword.toLowerCase()));
+        return field ? field.value : fallback;
+    };
+
+    const dynamicRevenue = getExtractedField('revenue', '$4,281,400');
+    const dynamicMargin = getExtractedField('margin', '24.8%');
+    const dynamicDebt = getExtractedField('debt', '$1.12M');
 
     return (
         <div className="max-w-7xl mx-auto py-6">
@@ -94,7 +107,7 @@ export default function Analytics() {
                 <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col justify-center items-center shadow-sm relative overflow-hidden">
                     <ShieldAlert className="absolute top-4 right-4 w-12 h-12 text-slate-50 opacity-50" />
                     <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 w-full text-left">OVERALL RISK SCORE</h3>
-                    <div className="relative w-40 h-40 flex items-center justify-center">
+                    <div className="relative flex items-center justify-center" style={{ width: '160px', height: '160px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie data={riskData} cx="50%" cy="50%" innerRadius={60} outerRadius={75} startAngle={225} endAngle={-45} dataKey="value" stroke="none">
@@ -117,7 +130,7 @@ export default function Analytics() {
                 <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
                     <MetricCard
                         title="Gross Revenue"
-                        value="$4,281,400"
+                        value={dynamicRevenue}
                         subtext=" "
                         trend="+12.5%"
                         isPositive={true}
@@ -126,11 +139,11 @@ export default function Analytics() {
                     />
                     <MetricCard
                         title="Operating Margin"
-                        value="24.8%"
+                        value={dynamicMargin}
                         subtext={
                             <div className="flex justify-between w-full mt-4 text-slate-500">
                                 <span>Target: 28%</span>
-                                <span>Current: 24.8%</span>
+                                <span>Current: {dynamicMargin}</span>
                             </div>
                         }
                         trend="-3.1%"
@@ -140,7 +153,7 @@ export default function Analytics() {
                     />
                     <MetricCard
                         title="Net Debt"
-                        value="$1.12M"
+                        value={dynamicDebt}
                         subtext="D/E Ratio: 0.42"
                         trend={null}
                         isPositive={false}
@@ -166,7 +179,7 @@ export default function Analytics() {
                         <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Revenue Trend</h2>
                         <MoreHorizontal className="w-5 h-5 text-slate-400 cursor-pointer" />
                     </div>
-                    <div className="flex-1 min-h-[200px]">
+                    <div style={{ width: '100%', height: '200px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={revenueData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} dy={10} />
@@ -179,7 +192,7 @@ export default function Analytics() {
 
                 <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col items-center justify-between shadow-sm">
                     <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider w-full text-center mb-2">DEBT-TO-EQUITY</h2>
-                    <div className="relative w-40 h-32 flex items-center justify-center">
+                    <div className="relative flex items-center justify-center" style={{ width: '160px', height: '128px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie data={debtData} cx="50%" cy="100%" innerRadius={60} outerRadius={75} startAngle={180} endAngle={0} dataKey="value" stroke="none">

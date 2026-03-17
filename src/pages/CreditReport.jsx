@@ -33,9 +33,30 @@ const DocumentPreview = ({ title, active }) => (
     </div>
 );
 
+import html2pdf from 'html2pdf.js';
+
 export default function CreditReport() {
+    const reportRef = React.useRef(null);
+    const [isExporting, setIsExporting] = React.useState(false);
+
+    const handleDownloadPDF = () => {
+        setIsExporting(true);
+        const element = reportRef.current;
+        const opt = {
+            margin: [0.5, 0.5, 0.5, 0.5], // top, left, bottom, right in inches
+            filename: 'TechFlow_Credit_Report.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            setIsExporting(false);
+        });
+    };
+
     return (
-        <div className="max-w-5xl mx-auto py-6">
+        <div className="max-w-5xl mx-auto py-6" ref={reportRef}>
 
             {/* Top Bar Navigation */}
             <div className="flex justify-between items-center mb-8">
@@ -46,8 +67,12 @@ export default function CreditReport() {
                     <ChevronRight className="w-4 h-4" />
                     <span className="text-slate-900">Final Report</span>
                 </div>
-                <button className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm rounded-lg shadow-sm flex items-center gap-2 transition-colors border border-transparent">
-                    <Download className="w-4 h-4" /> Download PDF Report
+                <button
+                    onClick={handleDownloadPDF}
+                    disabled={isExporting}
+                    className={`px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm rounded-lg shadow-sm flex items-center gap-2 transition-colors border border-transparent ${isExporting ? 'opacity-70 cursor-wait' : ''}`}
+                >
+                    <Download className="w-4 h-4" /> {isExporting ? 'Generating PDF...' : 'Download PDF Report'}
                 </button>
             </div>
 

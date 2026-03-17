@@ -7,17 +7,16 @@ from models.schemas import (
     EntityOnboardingRequest, 
     DocumentUploadResponse, 
     DataValidationResponse,
+    ValidationField,
     AnalyticsResponse,
     NewsResponse,
-    NewsSignal
+    NewsSignal,
+    ExtractedField
 )
 from services.document_processor import process_pdf_document
+from database import get_entities_collection, get_documents_collection
 
 api_router = APIRouter()
-
-# In-memory storage mock
-DB_ENTITIES = {}
-DB_DOCUMENTS = {}
 
 @api_router.get("/health")
 async def health_check():
@@ -29,7 +28,11 @@ async def onboard_entity(request: EntityOnboardingRequest):
     Register a new corporate entity for underwriting analysis.
     """
     entity_id = f"ENT-{str(uuid.uuid4())[:8].upper()}"
-    DB_ENTITIES[entity_id] = request.dict()
+    entity_data = request.dict()
+    entity_data["_id"] = entity_id
+    
+    collection = get_entities_collection()
+    await collection.insert_one(entity_data)
     
     return OnboardingResponse(
         status="success",
@@ -42,17 +45,25 @@ async def upload_document(file: UploadFile = File(...)):
     """
     Ingest a financial document (PDF, Excel, etc.) for processing.
     """
-    if not file.filename.endswith(".pdf"):
+    # normalize filename case so users can upload files with uppercase extensions
+    if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are currently supported for immediate extraction.")
 
     document_id = f"DOC-{str(uuid.uuid4())[:8].upper()}"
     
-    # Store minimal metadata
-    DB_DOCUMENTS[document_id] = {
+    file_bytes = await file.read()
+    
+    # Store minimal metadata and the raw content in MongoDB
+    doc_data = {
+        "_id": document_id,
         "filename": file.filename,
         "content_type": file.content_type,
-        "status": "PROCESSING"
+        "status": "PROCESSING",
+        "content": file_bytes
     }
+    
+    collection = get_documents_collection()
+    await collection.insert_one(doc_data)
     
     # In a real app we'd trigger a background Celery task here.
     return DocumentUploadResponse(
@@ -67,17 +78,49 @@ async def get_document_extraction(document_id: str):
     """
     Simulate polling the extraction results of an uploaded document.
     """
-    # For the sake of the hackathon, we simulate processing on-the-fly instead of async queues.
-    # We would theoretically load the binary payload from S3 here and parse:
-    # file_bytes = get_from_s3(document_id)
-    # But we'll just mock the output for demonstration.
+    collection = get_documents_collection()
+    doc_record = await collection.find_one({"_id": document_id})
     
-    mock_file_bytes = b"%PDF-1.4\n%TechFlow Solutions Inc. financials..."
-    fields = process_pdf_document(mock_file_bytes, "mock_document.pdf")
+    if not doc_record:
+        # Fallback to mock if doc_id not found
+        filename = "mock_document.pdf"
+        mock_file_bytes = b"%PDF-1.4\n%TechFlow Solutions Inc. financials..."
+        extracted_fields: List[ExtractedField] = process_pdf_document(mock_file_bytes, filename)
+    else:
+        file_bytes = doc_record.get("content", b"")
+        filename = doc_record.get("filename", "unknown.pdf")
+        extracted_fields: List[ExtractedField] = process_pdf_document(file_bytes, filename)
+    
+    # Transform fields to match frontend expectations
+    validation_fields: List[ValidationField] = []
+    warnings_count: int = 0
+    confidence_sum: float = 0.0
+    
+    for field in extracted_fields:
+        is_warning = field.warning is not None
+        if is_warning:
+            warnings_count = warnings_count + 1
+        
+        confidence_sum = confidence_sum + field.confidence
+        
+        validation_field = ValidationField(
+            key=field.label,
+            value=field.value,
+            confidence=round(field.confidence * 100),  # Convert to percentage
+            isWarning=is_warning,
+            warningText=field.warning if is_warning else None
+        )
+        validation_fields.append(validation_field)
+    
+    # Calculate overall confidence
+    overall_confidence = confidence_sum / len(extracted_fields) * 100 if extracted_fields else 0
     
     return DataValidationResponse(
         documentId=document_id,
-        fields=fields
+        filename=filename,
+        overallConfidence=round(overall_confidence, 1),
+        warnings=warnings_count,
+        fields=validation_fields
     )
 
 @api_router.get("/analytics/{entity_id}", response_model=AnalyticsResponse)

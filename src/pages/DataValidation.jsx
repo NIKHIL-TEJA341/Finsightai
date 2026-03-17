@@ -1,10 +1,18 @@
 import React from 'react';
 import { ZoomIn, ZoomOut, Download, AlertTriangle, CheckCircle2, ChevronRight, Edit2, LayoutList } from 'lucide-react';
 
-const PDFPreview = () => (
+const PDFPreview = ({ data }) => {
+    const filename = data?.filename || 'Uploaded_Document.pdf';
+    
+    // Find some fields to display as a preview if we don't have a real PDF viewer
+    const companyField = data?.fields?.find(f => f.key.toLowerCase().includes('company'));
+    const revenueField = data?.fields?.find(f => f.key.toLowerCase().includes('revenue'));
+    const textSnippetField = data?.fields?.find(f => f.key.toLowerCase().includes('snippet'));
+    
+    return (
     <div className="bg-slate-100 rounded-xl border border-slate-200 flex flex-col h-full overflow-hidden">
         <div className="bg-white px-4 py-3 border-b border-slate-200 flex justify-between items-center text-sm font-medium text-slate-600">
-            <span>PREVIEW: Uploaded_Balance_Sheet_Q3.pdf</span>
+            <span className="truncate">PREVIEW: {filename}</span>
             <div className="flex gap-3 text-slate-400">
                 <ZoomIn className="w-4 h-4 cursor-pointer hover:text-slate-700" />
                 <ZoomOut className="w-4 h-4 cursor-pointer hover:text-slate-700" />
@@ -12,79 +20,47 @@ const PDFPreview = () => (
             </div>
         </div>
         <div className="flex-1 p-6 overflow-auto custom-scrollbar flex justify-center">
-            {/* Mock PDF Document */}
+            {/* Mock PDF Document replaced with dynamic pseudo-preview */}
             <div className="bg-white shadow-sm w-full max-w-[500px] h-fit p-10 font-serif text-slate-800">
                 <div className="flex justify-between items-start mb-10 border-b-2 border-slate-800 pb-8">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-widest mb-2">GLOBAL CORP</h1>
-                        <h2 className="text-2xl font-bold tracking-widest mb-4">HOLDINGS</h2>
-                        <p className="italic text-slate-600">Quarterly Financial Statement</p>
-                    </div>
-                    <div className="text-right text-sm">
-                        <p className="mb-1">Fiscal Period</p>
-                        <p className="font-bold mb-4">Ending: Sept 30,<br />2023</p>
-                        <p>Currency: USD (In<br />Thousands)</p>
+                        <h1 className="text-3xl font-bold tracking-widest mb-2 uppercase">
+                            {companyField ? companyField.value : "CORPORATE ENTITY"}
+                        </h1>
+                        <p className="italic text-slate-600">Extracted Document Data</p>
                     </div>
                 </div>
 
-                <h3 className="text-lg font-bold mb-6 tracking-wide">ASSETS</h3>
+                <h3 className="text-lg font-bold mb-6 tracking-wide">DOCUMENT SUMMARY</h3>
                 <div className="space-y-4 text-sm">
-                    <div className="flex justify-between">
-                        <span>Cash & Cash Equivalents</span>
-                        <span>$42,850</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span>Accounts Receivable</span>
-                        <span>$124,600</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span>Inventory</span>
-                        <span>$88,900</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-base pt-4 border-t border-slate-300">
-                        <span>Total Current Assets</span>
-                        <span>$256,350</span>
-                    </div>
+                    {revenueField && (
+                        <div className="flex justify-between">
+                            <span>{revenueField.key}</span>
+                            <span className="font-bold">{revenueField.value}</span>
+                        </div>
+                    )}
+                    {data?.fields?.filter(f => !f.key.toLowerCase().includes('snippet') && !f.key.toLowerCase().includes('company') && !f.key.toLowerCase().includes('revenue')).map((f, i) => (
+                        <div key={i} className="flex justify-between">
+                            <span>{f.key}</span>
+                            <span>{f.value}</span>
+                        </div>
+                    ))}
                 </div>
 
-                <div className="mt-8 relative">
-                    <div className="absolute -inset-4 border-2 border-dashed border-primary-500 bg-primary-50/30 pointer-events-none"></div>
-                    <h4 className="font-bold mb-4 text-sm text-primary-900 relative z-10">LONG-TERM ASSETS</h4>
-                    <div className="space-y-4 text-sm relative z-10">
-                        <div className="flex justify-between">
-                            <span>Property, Plant & Equipment</span>
-                            <span>$842,000</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Intangible Assets</span>
-                            <span>$55,000</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-base pt-4 border-t border-slate-300">
-                            <span>Total Assets</span>
-                            <span>$1,153,350</span>
+                {textSnippetField && (
+                    <div className="mt-12 relative">
+                        <div className="absolute -inset-4 border-2 border-dashed border-primary-500 bg-primary-50/30 pointer-events-none"></div>
+                        <h4 className="font-bold mb-4 text-sm text-primary-900 relative z-10">RAW TEXT SNIPPET</h4>
+                        <div className="text-sm italic text-slate-600 relative z-10 break-words">
+                            "{textSnippetField.value}"
                         </div>
                     </div>
-                </div>
-
-                <h3 className="text-lg font-bold mt-12 mb-6 tracking-wide">LIABILITIES & EQUITY</h3>
-                <div className="space-y-4 text-sm">
-                    <div className="flex justify-between">
-                        <span>Accounts Payable</span>
-                        <span>$62,400</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span>Long-term Debt</span>
-                        <span>$412,000</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-base pt-4 border-t border-slate-300">
-                        <span>Total Liabilities</span>
-                        <span>$474,400</span>
-                    </div>
-                </div>
+                )}
             </div>
         </div>
     </div>
-);
+    );
+};
 
 const ExtractedField = ({ label, value, confidence, isWarning, warningText }) => (
     <div className="mb-5 last:mb-0">
@@ -147,6 +123,7 @@ export default function DataValidation() {
 
     // Fallback if data fails to load
     const extractionData = extraction || {
+        filename: "Fallback_Document.pdf",
         overallConfidence: 98.4,
         warnings: 2,
         fields: [
@@ -182,7 +159,7 @@ export default function DataValidation() {
             <div className="flex-1 flex gap-6 overflow-hidden">
                 {/* Left Pane: PDF Preview */}
                 <div className="flex-1 min-w-0">
-                    <PDFPreview />
+                    <PDFPreview data={extractionData} />
                 </div>
 
                 {/* Right Pane: Extracted Values */}
