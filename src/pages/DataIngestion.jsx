@@ -102,7 +102,7 @@ export default function DataIngestion() {
             // Simulate progress bump
             setUploads(prev => prev.map(u => u.id === newUploadId ? { ...u, progress: 40 } : u));
 
-            const response = await fetch("http://localhost:8000/api/upload", {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/api/upload`, {
                 method: "POST",
                 body: formData
             });

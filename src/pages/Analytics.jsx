@@ -57,8 +57,8 @@ export default function Analytics() {
         const docId = localStorage.getItem('latestDocumentId');
         
         Promise.all([
-            fetch('http://localhost:8000/api/analytics/ENT-1234').then(res => res.json()).catch(err => { console.error(err); return null; }),
-            docId ? fetch(`http://localhost:8000/api/documents/${docId}/extraction`).then(res => res.json()).catch(err => { console.error(err); return null; }) : Promise.resolve(null)
+            fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/api/analytics/ENT-1234`).then(res => res.json()).catch(err => { console.error(err); return null; }),
+            docId ? fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/api/documents/${docId}/extraction`).then(res => res.json()).catch(err => { console.error(err); return null; }) : Promise.resolve(null)
         ]).then(([analyticsData, extractionData]) => {
             if (analyticsData) setAnalytics(analyticsData);
             if (extractionData) setExtraction(extractionData);

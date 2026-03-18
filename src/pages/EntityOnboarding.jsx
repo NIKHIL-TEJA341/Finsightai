@@ -210,7 +210,7 @@ export default function EntityOnboarding() {
     const submitForm = async () => {
         setStatusText("SUBMITTING...");
         try {
-            const response = await fetch('http://localhost:8000/api/entities', {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/api/entities`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

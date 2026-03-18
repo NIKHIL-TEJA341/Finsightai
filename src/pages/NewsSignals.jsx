@@ -70,7 +70,7 @@ export default function NewsSignals() {
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
-        fetch('http://localhost:8000/api/signals')
+        fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/api/signals`)
             .then(res => res.json())
             .then(data => {
                 setSignals(data.signals);

@@ -101,7 +101,7 @@ export default function DataValidation() {
 
     React.useEffect(() => {
         const docId = localStorage.getItem('latestDocumentId') || 'DOC-999';
-        fetch(`http://localhost:8000/api/documents/${docId}/extraction`)
+        fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/api/documents/${docId}/extraction`)
             .then(res => res.json())
             .then(data => {
                 setExtraction(data);
